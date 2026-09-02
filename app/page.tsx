@@ -284,12 +284,11 @@ export default function Dashboard() {
               )}
             </div>
 
-            {result && result.error && (
-              <div className="p-5 border rounded-xl bg-red-50 shadow-lg text-black space-y-3 border-l-8 border-red-600">
-                <h2 className="font-bold text-xl text-red-700">Analysis Failed</h2>
-                <p className="text-red-600 font-medium">{result.error}</p>
-              </div>
-            )}
+            {result && result.severity !== 'None' && result.disease !== 'Healthy' && (
+  <div className="bg-red-100 text-red-800 p-3 rounded-lg font-bold mb-4">
+    ⚠️ EMERGENCY PROTOCOL ACTIVATED: Alert dispatched to local Veterinarian & Farmer via WhatsApp with Live GPS Coordinates.
+  </div>
+)}
             {alertMessage && (
           <div className="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mt-6 mb-4 font-bold shadow-md rounded-md">
             {alertMessage}

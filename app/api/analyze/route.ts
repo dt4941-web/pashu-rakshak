@@ -11,11 +11,11 @@ export async function POST(req: Request) {
     const { imageBase64, mimeType } = await req.json();
     const ai = new GoogleGenAI({ apiKey });
 
-    const prompt = `Analyze this livestock image for clinical signs of disease. Return ONLY a raw JSON object with no markdown formatting matching this exact schema:
+    const prompt = `Analyze this livestock image for clinical signs of disease. If the animal appears completely healthy and shows no signs of disease, return the disease name as 'Healthy', set the severity to 'None', and set the immediate_actions to ['No action required. Animal is healthy.']. Return ONLY a raw JSON object with this exact structure, no markdown formatting:
     {
       "disease": "string",
       "confidence": number,
-      "severity": "Critical" | "High" | "Moderate" | "Mild",
+      "severity": "Critical" | "High" | "Moderate" | "Mild" | "None",
       "symptoms": ["string"],
       "immediate_actions": ["string"]
     }`;
