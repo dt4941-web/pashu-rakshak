@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { History, PlusCircle, LogOut, Loader2, AlertTriangle, ShieldCheck } from "lucide-react";
+
 import SymptomRecorder from "./components/SymptomRecorder";
 import { createClient } from "@supabase/supabase-js";
 import dynamic from "next/dynamic";
@@ -14,6 +15,18 @@ const supabase = createClient(supabaseUrl, supabaseAnonKey);
 export default function Dashboard() {
   const [alertMessage, setAlertMessage] = useState("");
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loginError, setLoginError] = useState("");
+
+  const handleLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (email === "vet@pashurakshak.gov.in" && password === "SIH2026") {
+      setIsLoggedIn(true);
+    } else {
+      setLoginError("Invalid credentials. Try: vet@pashurakshak.gov.in / SIH2026");
+    }
+  };
   const [activeTab, setActiveTab] = useState("scan");
   
   const [image, setImage] = useState<string | null>(null);
@@ -147,26 +160,70 @@ export default function Dashboard() {
     }
   };
 
+  // --- LOGIN SCREEN INTERCEPTOR ---
   if (!isLoggedIn) {
     return (
-      <div className="flex h-screen items-center justify-center bg-gray-100">
-        <div className="bg-white p-10 rounded-2xl shadow-xl w-96 text-center">
-          <h1 className="text-4xl font-extrabold text-green-700 mb-2">Pashu Rakshak</h1>
-          <p className="text-gray-500 mb-8">Farmer & Veterinarian Portal</p>
-          <button 
-            onClick={() => setIsLoggedIn(true)}
-            className="w-full bg-green-600 text-white font-bold py-4 rounded-xl hover:bg-green-700 transition-all shadow-md"
-          >
-            Secure Login
-          </button>
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-emerald-950 via-teal-900 to-slate-900 p-4">
+        
+        {/* Glassmorphism Card */}
+        <div className="bg-white/10 backdrop-blur-xl p-8 rounded-3xl shadow-2xl max-w-md w-full border border-white/20 relative overflow-hidden">
+          
+          {/* Decorative Glow inside the card */}
+          <div className="absolute -top-20 -right-20 w-40 h-40 bg-emerald-500/30 rounded-full blur-3xl"></div>
+          
+          <div className="flex justify-center mb-6 relative z-10">
+            <div className="bg-emerald-500/20 p-4 rounded-2xl ring-1 ring-emerald-500/30 shadow-lg">
+              <ShieldCheck className="h-10 w-10 text-emerald-300" />
+            </div>
+          </div>
+          <h1 className="text-3xl font-extrabold text-white mb-8 text-center tracking-tight">Pashu Rakshak</h1>
+          
+          <form onSubmit={handleLogin} className="space-y-6 relative z-10">
+            <div>
+              <label className="block text-sm font-medium text-emerald-100 mb-1.5">Veterinarian Email</label>
+              <input 
+                type="email" 
+                value={email} 
+                onChange={(e) => setEmail(e.target.value)} 
+                className="w-full bg-white/5 border border-white/10 text-white placeholder-emerald-200/50 rounded-xl p-3 focus:ring-2 focus:ring-emerald-400 focus:border-transparent transition-all outline-none" 
+                placeholder="vet@pashurakshak.gov.in"
+                required 
+              />
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-emerald-100 mb-1.5">Secure Password</label>
+              <input 
+                type="password" 
+                value={password} 
+                onChange={(e) => setPassword(e.target.value)} 
+                className="w-full bg-white/5 border border-white/10 text-white placeholder-emerald-200/50 rounded-xl p-3 focus:ring-2 focus:ring-emerald-400 focus:border-transparent transition-all outline-none" 
+                placeholder="••••••••"
+                required 
+              />
+            </div>
+
+            {loginError && <p className="text-red-400 text-sm font-semibold bg-red-500/10 p-3 rounded-lg border border-red-500/20">{loginError}</p>}
+
+            <button type="submit" className="w-full bg-gradient-to-r from-emerald-500 to-teal-500 text-white p-3.5 rounded-xl hover:from-emerald-400 hover:to-teal-400 transition-all duration-300 shadow-lg shadow-emerald-500/25 font-bold text-lg hover:-translate-y-0.5">
+              Access Dashboard
+            </button>
+          </form>
+
+          {/* HINT FOR JUDGES */}
+          <div className="mt-8 p-5 bg-black/20 border border-white/10 rounded-2xl text-sm text-emerald-100 shadow-inner relative z-10">
+            <p className="font-semibold mb-2 flex items-center gap-2 text-white">👨‍⚖️ Demo Details for SIH Judges:</p>
+            <p className="mb-1 opacity-90">Email: <span className="font-mono font-bold text-emerald-300">vet@pashurakshak.gov.in</span></p>
+            <p className="opacity-90">Password: <span className="font-mono font-bold text-emerald-300">SIH2026</span></p>
+          </div>
         </div>
       </div>
     );
   }
-
+  // --------------------------------
 
   return (
-    <div className="flex h-screen bg-gray-50 text-black">
+    <div className="flex h-screen bg-gradient-to-br from-slate-50 via-emerald-50/30 to-teal-100/50 text-black">
       <div className="w-64 bg-white border-r shadow-sm p-4 flex flex-col">
         <h2 className="text-2xl font-extrabold text-green-700 mb-8 mt-2 px-2">Pashu Rakshak</h2>
         <nav className="flex-1 space-y-2">
@@ -184,22 +241,47 @@ export default function Dashboard() {
 
       <div className="flex-1 overflow-y-auto p-10">
         {activeTab === "scan" && (
-          <div className="max-w-2xl mx-auto space-y-6">
-            <h1 className="text-3xl font-bold border-b pb-4">Instant Disease Detection</h1>
+          <div className="max-w-2xl mx-auto space-y-8 animate-in fade-in duration-500">
             
-            <SymptomRecorder onRecordComplete={(text) => setSymptoms(text)} />
-            
-            <div className="bg-white p-6 rounded-2xl shadow-sm border relative">
-               <label className="block font-bold mb-2">Upload Photo to Auto-Analyze</label>
-               
-               {loading && (
-                 <div className="absolute inset-0 bg-white/80 flex items-center justify-center rounded-xl z-10">
-                   <span className="text-green-700 font-bold animate-pulse text-lg">Analyzing Disease & Saving to Database...</span>
-                 </div>
-               )}
+            {/* Header */}
+            <div className="border-b border-slate-200 pb-5">
+              <h1 className="text-3xl font-extrabold text-slate-800 tracking-tight">Instant Disease Detection</h1>
+              <p className="text-slate-500 mt-2">Upload a photo or describe symptoms to run an AI diagnosis.</p>
+            </div>
 
-               <input type="file" accept="image/*" onChange={handleImageUpload} className="w-full border p-2 rounded-lg mb-4" />
-               {image && <img src={image} alt="Preview" className="h-48 w-full object-cover rounded-lg shadow-sm border" />}
+            {/* Symptoms Card */}
+            <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow duration-300">
+              <h3 className="font-bold text-slate-700 mb-4 flex items-center gap-2">
+                <span className="bg-teal-100 text-teal-700 p-1.5 rounded-lg">📝</span> Record Symptoms
+              </h3>
+              
+              {/* Keep your existing SymptomRecorder component here, but wrap it nicely */}
+              <div className="space-y-4">
+                <SymptomRecorder onRecordComplete={setSymptoms} />
+              </div>
+            </div>
+
+            {/* Upload Card */}
+            <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow duration-300">
+               <h3 className="font-bold text-slate-700 mb-4 flex items-center gap-2">
+                <span className="bg-emerald-100 text-emerald-700 p-1.5 rounded-lg">📸</span> Upload Photo to Auto-Analyze
+              </h3>
+              
+              <div className="relative group cursor-pointer">
+                <input 
+                  type="file" 
+                  accept="image/*" 
+                  onChange={handleImageUpload} 
+                  className="w-full text-sm text-slate-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-teal-50 file:text-teal-700 hover:file:bg-teal-100 border border-slate-200 rounded-xl p-2 focus:outline-none focus:ring-2 focus:ring-teal-500 transition-all cursor-pointer"
+                />
+              </div>
+
+              {image && (
+                <div className="mt-6 rounded-xl overflow-hidden border border-slate-200 shadow-sm relative">
+                  <div className="absolute top-2 right-2 bg-black/50 text-white text-xs px-2 py-1 rounded-md backdrop-blur-sm">Image Preview</div>
+                  <img src={image} alt="Preview" className="h-56 w-full object-cover" />
+                </div>
+              )}
             </div>
 
             {result && result.error && (

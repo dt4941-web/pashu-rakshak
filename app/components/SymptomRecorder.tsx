@@ -57,7 +57,7 @@ export default function SymptomRecorder({ onRecordComplete }: { onRecordComplete
       <button 
         onClick={toggleRecording}
         className={`flex items-center justify-center p-3 w-full text-white rounded-lg transition-colors ${
-          isRecording ? "bg-red-500 animate-pulse" : "bg-blue-600 hover:bg-blue-700"
+          isRecording ? "bg-red-500 animate-pulse" : "bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-600 hover:to-emerald-600 shadow-md"
         }`}
       >
         {isRecording ? <Square className="mr-2" /> : <Mic className="mr-2" />}
