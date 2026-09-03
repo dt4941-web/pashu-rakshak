@@ -270,20 +270,31 @@ export default function Dashboard() {
     }
   };
 
-  const sendAlertToVet = async (details: { condition: string; confidence: number }) => {
+ const sendAlertToVet = async (details: { condition: string; confidence: number }) => {
     try {
-      await fetch('/api/submit_report.php', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          condition: details.condition,
-          confidence: details.confidence,
-          image: image,
-          timestamp: new Date().toISOString(),
-        }),
-      });
+      // Determine severity for your database table
+      let recordSeverity = 'Critical';
+      if (details.condition === 'Healthy Animal') recordSeverity = 'None';
+      if (details.condition === 'Unknown Condition') recordSeverity = 'Moderate';
+
+      // Insert directly into your Supabase table
+    const { error } = await supabase
+      .from('disease_reports') 
+      .insert([
+        {
+          disease: details.condition,
+          severity: recordSeverity,
+          confidence: details.confidence
+        }
+      ]);
+
+      if (error) {
+        console.error('Supabase insert error:', error.message);
+      } else {
+        console.log('Successfully saved alert to Supabase!');
+      }
     } catch (error) {
-      console.error('Failed to notify backend:', error);
+      console.error('Failed to connect to Supabase:', error);
     }
   };
 
