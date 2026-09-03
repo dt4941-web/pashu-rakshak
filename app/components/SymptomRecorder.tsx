@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { Mic, Square } from "lucide-react";
-
+import { motion } from "framer-motion"; // <-- Add this line here
 export default function SymptomRecorder({ onRecordComplete }: { onRecordComplete: (text: string) => void }) {
   const [isRecording, setIsRecording] = useState(false);
   const [transcript, setTranscript] = useState("");
@@ -40,20 +40,26 @@ export default function SymptomRecorder({ onRecordComplete }: { onRecordComplete
   };
 
   return (
-    <div className="p-4 border rounded-lg shadow-sm bg-white text-black">
-      <h3 className="font-bold mb-2">Record Symptoms</h3>
-      <select 
-        className="mb-4 p-2 border rounded w-full"
-        value={language} 
-        onChange={(e) => setLanguage(e.target.value)}
-        disabled={isRecording}
-      >
-        <option value="hi-IN">Hindi (हिंदी)</option>
-        <option value="mr-IN">Marathi (मराठी)</option>
-        <option value="gu-IN">Gujarati (ગુજરાતી)</option>
-        <option value="en-US">English</option>
-      </select>
-
+    <motion.div 
+  initial={{ opacity: 0, y: 20 }}
+  animate={{ opacity: 1, y: 0 }}
+  transition={{ duration: 0.5 }}
+  className="p-6 rounded-2xl bg-white/10 backdrop-blur-md border border-white/10 text-white shadow-xl transition-all duration-300 hover:-translate-y-1 hover:border-emerald-500/50"
+>
+  <h3 className="font-bold text-lg mb-4 text-emerald-300">Record Symptoms</h3>
+  
+  <select
+    className="mb-4 p-3 bg-slate-900/80 border border-white/20 rounded-xl w-full text-white outline-none focus:ring-2 focus:ring-emerald-400"
+    value={language}
+    onChange={(e) => setLanguage(e.target.value)}
+    disabled={isRecording}
+  >
+    <option value="hi-IN" className="bg-slate-900">Hindi (हिंदी)</option>
+    <option value="mr-IN" className="bg-slate-900">Marathi (मराठी)</option>
+    <option value="gu-IN" className="bg-slate-900">Gujarati (ગુજરાતી)</option>
+    <option value="en-US" className="bg-slate-900">English</option>
+  </select>
+  {/* Keep existing button & transcript */}
       <button 
         onClick={toggleRecording}
         className={`flex items-center justify-center p-3 w-full text-white rounded-lg transition-colors ${
@@ -64,7 +70,7 @@ export default function SymptomRecorder({ onRecordComplete }: { onRecordComplete
         {isRecording ? "Stop Recording" : "Tap to Speak"}
       </button>
 
-      {transcript && <p className="mt-4 p-2 bg-gray-50 rounded border">{transcript}</p>}
-    </div>
+      {transcript && <p className="mt-4 p-3 bg-black/40 text-emerald-200 rounded-xl border border-white/10 text-sm shadow-inner">{transcript}</p>}
+    </motion.div>
   );
 }

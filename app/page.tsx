@@ -5,7 +5,7 @@ import SymptomRecorder from "./components/SymptomRecorder";
 import { createClient } from "@supabase/supabase-js";
 import dynamic from "next/dynamic";
 const DiseaseMap = dynamic(() => import("./components/DiseaseMap"), { ssr: false });
-
+import { motion } from "framer-motion";
 
 // Initialize Supabase Connection
 const supabaseUrl = "https://owbajiljwqzkvjijwlss.supabase.co";
@@ -27,6 +27,7 @@ export default function Dashboard() {
       setLoginError("Invalid credentials. Try: vet@pashurakshak.gov.in / SIH2026");
     }
   };
+  const [selectedAnimal, setSelectedAnimal] = useState("")
   const [activeTab, setActiveTab] = useState("scan");
   
   const [image, setImage] = useState<string | null>(null);
@@ -168,60 +169,89 @@ export default function Dashboard() {
   // --- LOGIN SCREEN INTERCEPTOR ---
   if (!isLoggedIn) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-emerald-950 via-teal-900 to-slate-900 p-4">
+      <div className="min-h-screen flex flex-col md:flex-row bg-gradient-to-r from-emerald-950 via-teal-900 to-slate-950 animate-gradient">
         
-        {/* Glassmorphism Card */}
-        <div className="bg-white/10 backdrop-blur-xl p-8 rounded-3xl shadow-2xl max-w-md w-full border border-white/20 relative overflow-hidden">
-          
-          {/* Decorative Glow inside the card */}
-          <div className="absolute -top-20 -right-20 w-40 h-40 bg-emerald-500/30 rounded-full blur-3xl"></div>
-          
-          <div className="flex justify-center mb-6 relative z-10">
-            <div className="bg-emerald-500/20 p-4 rounded-2xl ring-1 ring-emerald-500/30 shadow-lg">
-              <ShieldCheck className="h-10 w-10 text-emerald-300" />
-            </div>
-          </div>
-          <h1 className="text-3xl font-extrabold text-white mb-8 text-center tracking-tight">Pashu Rakshak</h1>
-          
-          <form onSubmit={handleLogin} className="space-y-6 relative z-10">
-            <div>
-              <label className="block text-sm font-medium text-emerald-100 mb-1.5">Veterinarian Email</label>
-              <input 
-                type="email" 
-                value={email} 
-                onChange={(e) => setEmail(e.target.value)} 
-                className="w-full bg-white/5 border border-white/10 text-white placeholder-emerald-200/50 rounded-xl p-3 focus:ring-2 focus:ring-emerald-400 focus:border-transparent transition-all outline-none" 
-                placeholder="vet@pashurakshak.gov.in"
-                required 
-              />
-            </div>
+        {/* LEFT SIDE: Livestock Care Video & Awareness */}
+        <div className="hidden md:flex md:w-1/2 flex-col justify-center items-center p-12 bg-black/20 border-r border-white/10 backdrop-blur-sm">
+          <div className="max-w-md text-center">
             
-            <div>
-              <label className="block text-sm font-medium text-emerald-100 mb-1.5">Secure Password</label>
-              <input 
-                type="password" 
-                value={password} 
-                onChange={(e) => setPassword(e.target.value)} 
-                className="w-full bg-white/5 border border-white/10 text-white placeholder-emerald-200/50 rounded-xl p-3 focus:ring-2 focus:ring-emerald-400 focus:border-transparent transition-all outline-none" 
-                placeholder="••••••••"
-                required 
-              />
+            {/* Looping Veterinary / Livestock Care Video */}
+            <div className="w-72 h-48 mx-auto mb-6 rounded-3xl overflow-hidden border border-white/10 shadow-2xl relative">
+              <video
+                autoPlay
+                loop
+                muted
+                playsInline
+                className="w-full h-full object-cover"
+                poster="https://images.unsplash.com/photo-1570042225831-d98fa7577f1e?auto=format&fit=crop&w=600&q=80"
+              >
+                <source
+                  src="https://assets.mixkit.co/videos/preview/mixkit-cows-in-a-field-pasture-42698-large.mp4"
+                  type="video/mp4"
+                />
+              </video>
+              <div className="absolute inset-0 bg-emerald-950/20 pointer-events-none" />
             </div>
 
-            {loginError && <p className="text-red-400 text-sm font-semibold bg-red-500/10 p-3 rounded-lg border border-red-500/20">{loginError}</p>}
-
-            <button type="submit" className="w-full bg-gradient-to-r from-emerald-500 to-teal-500 text-white p-3.5 rounded-xl hover:from-emerald-400 hover:to-teal-400 transition-all duration-300 shadow-lg shadow-emerald-500/25 font-bold text-lg hover:-translate-y-0.5">
-              Access Dashboard
-            </button>
-          </form>
-
-          {/* HINT FOR JUDGES */}
-          <div className="mt-8 p-5 bg-black/20 border border-white/10 rounded-2xl text-sm text-emerald-100 shadow-inner relative z-10">
-            <p className="font-semibold mb-2 flex items-center gap-2 text-white">👨‍⚖️ Demo Details for SIH Judges:</p>
-            <p className="mb-1 opacity-90">Email: <span className="font-mono font-bold text-emerald-300">vet@pashurakshak.gov.in</span></p>
-            <p className="opacity-90">Password: <span className="font-mono font-bold text-emerald-300">SIH2026</span></p>
+            <h1 className="text-3xl font-extrabold text-white mb-4">
+              Protecting Livestock, Empowering Farmers
+            </h1>
+            <p className="text-emerald-100/80 text-sm leading-relaxed">
+              Stay aware of critical livestock diseases like Lumpy Skin Disease and FMD. Rapid AI-driven detection ensures healthier herds and secures farmer livelihoods.
+            </p>
           </div>
         </div>
+
+        {/* RIGHT SIDE: Login Card */}
+        <div className="w-full md:w-1/2 flex items-center justify-center p-6">
+          <div className="bg-white/10 backdrop-blur-xl p-8 rounded-3xl shadow-2xl max-w-md w-full border border-white/20 relative overflow-hidden">
+            
+            <h2 className="text-3xl font-extrabold text-white mb-8 text-center tracking-tight">Pashu Rakshak</h2>
+            
+            <form onSubmit={handleLogin} className="space-y-6 relative z-10">
+              <div>
+                <label className="block text-sm font-medium text-emerald-100 mb-1.5">Veterinarian Email</label>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full bg-white/5 border border-white/10 text-white placeholder-emerald-200/50 rounded-xl p-3 focus:ring-2 focus:ring-emerald-400 focus:border-transparent transition-all outline-none"
+                  placeholder="vet@pashurakshak.gov.in"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-emerald-100 mb-1.5">Secure Password</label>
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full bg-white/5 border border-white/10 text-white placeholder-emerald-200/50 rounded-xl p-3 focus:ring-2 focus:ring-emerald-400 focus:border-transparent transition-all outline-none"
+                  required
+                />
+              </div>
+
+              {loginError && <p className="text-red-400 text-xs text-center">{loginError}</p>}
+
+              <button
+                type="submit"
+                className="w-full bg-gradient-to-r from-teal-500 to-emerald-500 text-white font-bold py-3.5 rounded-xl shadow-lg hover:from-teal-600 hover:to-emerald-600 transition-all duration-300"
+              >
+                Access Dashboard
+              </button>
+            </form>
+
+            {/* Demo Details Hint for Judges */}
+            <div className="mt-6 pt-4 border-t border-white/10 text-xs text-emerald-200/70 text-center">
+              <p className="font-semibold text-emerald-100 mb-1">Demo Details for SIH Judges:</p>
+              <p>Email: vet@pashurakshak.gov.in</p>
+              <p>Password: SIH2026</p>
+            </div>
+
+          </div>
+        </div>
+
       </div>
     );
   }
@@ -297,77 +327,153 @@ export default function Dashboard() {
     }
   };
 
+  // --- MAIN DASHBOARD (Logged In) ---
   return (
-    <div className="flex h-screen bg-gradient-to-br from-slate-50 via-emerald-50/30 to-teal-100/50 text-black">
-      <div className="w-64 bg-white border-r shadow-sm p-4 flex flex-col">
-        <h2 className="text-2xl font-extrabold text-green-700 mb-8 mt-2 px-2">Pashu Rakshak</h2>
-        <nav className="flex-1 space-y-2">
-          <button onClick={() => setActiveTab("scan")} className={`w-full flex items-center p-3 rounded-lg transition-all ${activeTab === "scan" ? "bg-green-50 text-green-700 font-bold" : "hover:bg-gray-100 text-gray-700"}`}>
-            <PlusCircle className="mr-3 h-5 w-5" /> New AI Scan
-          </button>
-          <button onClick={() => setActiveTab("database")} className={`w-full flex items-center p-3 rounded-lg transition-all ${activeTab === "database" ? "bg-green-50 text-green-700 font-bold" : "hover:bg-gray-100 text-gray-700"}`}>
-            <History className="mr-3 h-5 w-5" /> Health Database
-          </button>
-        </nav>
-        <button onClick={() => setIsLoggedIn(false)} className="flex items-center p-3 text-red-600 hover:bg-red-50 rounded-lg transition-all font-semibold">
-          <LogOut className="mr-3 h-5 w-5" /> Logout
+    <div className="min-h-screen flex bg-slate-950 text-slate-100">
+      
+      {/* 1. Left Sidebar */}
+      <div className="w-64 bg-slate-900/80 border-r border-white/10 p-6 flex flex-col justify-between backdrop-blur-xl">
+        <div>
+          <h1 className="text-2xl font-extrabold text-emerald-400 mb-8 tracking-tight">
+            Pashu Rakshak
+          </h1>
+          
+          <nav className="space-y-3">
+            <button
+              onClick={() => setActiveTab("scan")}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all ${
+                activeTab === "scan"
+                  ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
+                  : "text-slate-400 hover:text-white hover:bg-white/5"
+              }`}
+            >
+              <PlusCircle className="w-5 h-5" />
+              New AI Scan
+            </button>
+
+            <button
+              onClick={() => setActiveTab("database")}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all ${
+                activeTab === "database"
+                  ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
+                  : "text-slate-400 hover:text-white hover:bg-white/5"
+              }`}
+            >
+              <History className="w-5 h-5" />
+              Health Database
+            </button>
+          </nav>
+        </div>
+
+        {/* Logout Button */}
+        <button
+          onClick={() => setIsLoggedIn(false)}
+          className="flex items-center gap-2 text-slate-400 hover:text-red-400 transition-colors p-2 text-sm font-semibold"
+        >
+          <LogOut className="w-4 h-4" />
+          Logout
         </button>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-10">
+      {/* 2. Main Content Area */}
+      <div className="flex-1 p-8 overflow-y-auto bg-gradient-to-r from-emerald-950 via-teal-900 to-slate-950 animate-gradient">
         {activeTab === "scan" && (
           <div className="max-w-2xl mx-auto space-y-8 animate-in fade-in duration-500">
             
+            
             {/* Header */}
-            <div className="border-b border-slate-200 pb-5">
-              <h1 className="text-3xl font-extrabold text-slate-800 tracking-tight">Instant Disease Detection</h1>
-              <p className="text-slate-500 mt-2">Upload a photo or describe symptoms to run an AI diagnosis.</p>
+            <div className="border-b border-white/10 pb-5">
+              <h1 className="text-3xl font-extrabold text-white tracking-tight">Instant Disease Detection</h1>
+              <p className="text-emerald-100/80 mt-2">Upload a photo or describe symptoms to run an AI diagnosis.</p>
             </div>
 
-            {/* Symptoms Card */}
-            <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow duration-300">
-              <h3 className="font-bold text-slate-700 mb-4 flex items-center gap-2">
-                <span className="bg-teal-100 text-teal-700 p-1.5 rounded-lg">📝</span> Record Symptoms
-              </h3>
+            {/* ---> PASTE THE NEW ANIMATED CATEGORY SELECTOR HERE (Line 387) <--- */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="relative p-6 rounded-2xl bg-black/40 backdrop-blur-md border border-white/10 text-white shadow-xl overflow-hidden mt-6"
+            >
+              {/* Background Video Animation for the category card */}
+              <div className="absolute inset-0 opacity-20 pointer-events-none mix-blend-screen">
+                <video autoPlay loop muted playsInline className="w-full h-full object-cover">
+                  <source src="https://assets.mixkit.co/videos/preview/mixkit-cows-in-a-field-pasture-42698-large.mp4" type="video/mp4" />
+                </video>
+              </div>
               
-              {/* Keep your existing SymptomRecorder component here, but wrap it nicely */}
-              <div className="space-y-4">
+              <div className="relative z-10">
+                <h3 className="font-bold text-lg mb-4 text-emerald-300">1. Select Animal Category</h3>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  {["🐄 Cow", "🐃 Buffalo", "🐕 Dog", "🐈 Cat"].map((animal) => (
+                    <button 
+                      key={animal}
+                      type="button"
+                      onClick={() => setSelectedAnimal(animal)}
+                      className={`p-3 rounded-xl font-semibold transition-all duration-300 hover:scale-105 active:scale-95 shadow-lg border ${
+                        selectedAnimal === animal
+                          ? "bg-emerald-500 border-emerald-400 text-white shadow-emerald-500/40"
+                          : "bg-emerald-500/10 hover:bg-emerald-500/30 border-emerald-500/30 text-emerald-100"
+                      }`}
+                    >
+                      {animal}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </motion.div>
+
+            {/* 1. Record Symptoms Card */}
+            <div className="w-full mt-6">
                 <SymptomRecorder onRecordComplete={setSymptoms} />
-              </div>
             </div>
 
-            {/* Upload Card */}
-            <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 hover:shadow-md transition-shadow duration-300">
-               <h3 className="font-bold text-slate-700 mb-4 flex items-center gap-2">
-                <span className="bg-emerald-100 text-emerald-700 p-1.5 rounded-lg">📸</span> Upload Photo to Auto-Analyze
-              </h3>
-              
-              <div className="relative group cursor-pointer">
-                <input 
-                  type="file" 
-                  accept="image/*" 
-                  onChange={handleImageUpload} 
-                  className="w-full text-sm text-slate-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-teal-50 file:text-teal-700 hover:file:bg-teal-100 border border-slate-200 rounded-xl p-2 focus:outline-none focus:ring-2 focus:ring-teal-500 transition-all cursor-pointer"
-                />
-              </div>
+            
 
-              {image && (
-  <>
-    <div className="mt-6 rounded-xl overflow-hidden border border-slate-200 shadow-sm relative">
-      <div className="absolute top-2 right-2 bg-black/50 text-white text-xs px-2 py-1 rounded-md backdrop-blur-sm">Image Preview</div>
-      <img ref={imageRef} src={image} alt="Preview" className="h-56 w-full object-cover" />
-    </div>
+      {/* 2. Upload Photo Card */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.2 }}
+        className="p-6 rounded-2xl bg-white/10 backdrop-blur-md border border-white/10 text-white shadow-xl transition-all duration-300 hover:-translate-y-1 hover:border-emerald-500/50 mt-6"
+      >
+        <h3 className="font-bold text-lg mb-4 text-emerald-300 flex items-center gap-2">
+          <span>📸</span> Upload Photo to Auto-Analyze
+        </h3>
+
+        <div className="relative group cursor-pointer">
+          <input
+            type="file"
+            accept="image/*"
+            onChange={handleImageUpload}
+            className="w-full text-sm text-slate-300 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-emerald-500/20 file:text-emerald-300 hover:file:bg-emerald-500/30 cursor-pointer"
+          />
+        </div>
+
+        {image && (
+          <>
+            <div className="mt-6 rounded-xl overflow-hidden border border-white/20 shadow-sm relative">
+              <div className="absolute top-2 right-2 bg-black/60 text-white text-xs px-2 py-1 rounded-md backdrop-blur-sm">Image Preview</div>
+              <img ref={imageRef} src={image} alt="Preview" className="h-56 w-full object-cover" />
+            </div>
+            <button
+              onClick={analyzeImage}
+              disabled={loading}
+              className="w-full mt-4 bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-600 hover:to-emerald-600 text-white py-3 rounded-xl font-bold transition-all shadow-lg"
+            >
+              {loading ? "Analyzing Image..." : "Run AI Diagnosis"}
+            </button>
+          </>
+        )}
+      </motion.div>
     
-    <button 
-      onClick={analyzeImage} 
-      disabled={loading}
-      className="w-full mt-4 bg-teal-600 hover:bg-teal-700 text-white py-3 rounded-xl font-bold transition-colors"
-    >
-      {loading ? "Analyzing Image..." : "Run AI Diagnosis"}
-    </button>
-  </>
-)}
-            </div>
+
+        <div className="relative group cursor-pointer">
+          <input
+            type="file"
+            accept="image/*"
+            onChange={handleImageUpload}
+            className="w-full text-sm text-slate-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-teal-50 file:text-teal-700 hover:file:bg-teal-100"
+          />
+        </div>
             {/* AI Alert Banner */}
 {statusMessage && (
   <div className={`p-4 mt-6 rounded-xl text-sm font-semibold border ${alertActive ? 'bg-red-50 text-red-800 border-red-200' : 'bg-emerald-50 text-emerald-800 border-emerald-200'}`}>
@@ -376,16 +482,34 @@ export default function Dashboard() {
 )}
 
 {/* AI Diagnosis Details */}
-              {diagnosis && (
-                <div className="p-5 mt-4 border rounded-xl bg-white shadow-lg text-black space-y-3 border-t-4 border-t-teal-500">
-                  <h2 className="font-bold text-2xl text-teal-700 border-b pb-2">
-                    Diagnosis: {diagnosis}
-                  </h2>
-                  <div className="flex justify-between">
-                    <p><strong>Confidence:</strong> {confidence}%</p>
-                  </div>
-                </div>
-    )}
+      {diagnosis && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="mt-6 p-6 rounded-2xl bg-white/10 backdrop-blur-md border border-teal-500/30 text-white shadow-xl space-y-4"
+        >
+          <h2 className="font-bold text-xl text-teal-300 border-b border-white/10 pb-3 flex items-center justify-between">
+            <span>Diagnosis Result</span>
+            <span className="text-sm font-semibold px-3 py-1 bg-teal-500/20 text-teal-300 rounded-full border border-teal-500/30">
+              {diagnosis}
+            </span>
+          </h2>
+
+          <div className="flex items-center justify-between text-slate-200">
+            <p className="text-sm font-medium">Confidence Score:</p>
+            <p className="text-lg font-bold text-emerald-400">{confidence}%</p>
+          </div>
+
+          {/* Progress bar visual for confidence */}
+          <div className="w-full bg-slate-800/80 h-2.5 rounded-full overflow-hidden border border-white/10">
+            <div
+              className="bg-gradient-to-r from-teal-400 to-emerald-400 h-full rounded-full transition-all duration-700"
+              style={{ width: `${confidence}%` }}
+            />
+          </div>
+        </motion.div>
+      )}
   </div>
 )}
 
