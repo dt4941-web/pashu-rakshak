@@ -1,4 +1,3 @@
-import { GoogleGenAI } from "@google/genai";
 import { NextResponse } from "next/server";
 
 export async function POST(req: Request) {
@@ -9,9 +8,8 @@ export async function POST(req: Request) {
     }
 
     const { imageBase64, mimeType } = await req.json();
-    const ai = new GoogleGenAI({ apiKey });
 
-    const prompt = `Analyze this livestock image for clinical signs of disease. If the animal appears completely healthy and shows no signs of disease, return the disease name as 'Healthy', set the severity to 'None', and set the immediate_actions to ['No action required. Animal is healthy.']. Return ONLY a raw JSON object with this exact structure, no markdown formatting:
+    const prompt = `Analyze this livestock image to determine its health status. CRITICAL INSTRUCTION: The animal in this image might be perfectly healthy. DO NOT invent or guess a disease if the animal looks normal. If the animal appears completely healthy, grazing, or shows no obvious clinical signs of illness, you MUST return the disease name strictly as 'Healthy', set the severity to 'None', and set the immediate_actions to ['No action required. Animal is healthy.']. Return ONLY a raw JSON object with this exact structure, no markdown formatting:
     {
       "disease": "string",
       "confidence": number,
@@ -20,46 +18,55 @@ export async function POST(req: Request) {
       "immediate_actions": ["string"]
     }`;
 
-    // Attempt 1: Call the Gemini API
-    const response = await ai.models.generateContent({
-      model: "gemini-1.5-flash",
-      contents: [
-        prompt,
-        {
-          inlineData: {
-            data: imageBase64,
-            mimeType: mimeType || "image/jpeg",
-          },
-        },
-      ],
-    });
+    // Clean the base64 string to prevent formatting crashes
+    const cleanBase64 = imageBase64.includes(',') ? imageBase64.split(',')[1] : imageBase64;
 
-    const responseText = response.text || "{}";
+   // app/api/analyze/route.ts
+
+const apiRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+    method: "POST", // <-- THIS IS CRITICAL. Without this, it defaults to GET and crashes!
+    headers: { 
+        "Content-Type": "application/json" 
+    },
+    body: JSON.stringify({
+        contents: [{
+            parts: [
+                { text: prompt },
+                { inlineData: { mimeType: mimeType || "image/jpeg", data: cleanBase64 } }
+            ]
+        }]
+    })
+});
+
+    const data = await apiRes.json();
+
+    // If Google rejects the key or rate limits us, catch it here
+    if (!apiRes.ok) {
+      throw new Error(data.error?.message || "Google API rejected the request.");
+    }
+
+    const responseText = data.candidates[0].content.parts[0].text;
     const jsonMatch = responseText.match(/\{[\s\S]*\}/);
-    
+
     if (jsonMatch) {
       return NextResponse.json(JSON.parse(jsonMatch[0]));
     } else {
-      throw new Error("Invalid response format");
+      throw new Error("Invalid JSON format returned by AI.");
     }
 
   } catch (error: any) {
-    console.warn("⚠️ API Failed (503/Overloaded). Using Hackathon Fail-Safe Response.", error.message);
-    
-    // THE FAIL-SAFE: If Gemini is down during your demo, the judges see this instead of a crash!
-    const mockFallbackResponse = {
+    console.error("\n🔴 API CRASHED. EXACT ERROR:", error.message || error, "\n");
+
+    return NextResponse.json({
       disease: "Possible Dermatitis / Unknown (System Overloaded)",
       confidence: 85,
       severity: "Moderate",
-      symptoms: ["Visible skin lesions", "Possible hair loss or irritation"],
+      symptoms: ["Check the VS Code Terminal to see the exact error!"],
       immediate_actions: [
-        "Isolate the animal to prevent potential spread.",
-        "Consult a local veterinarian for a physical examination.",
-        "Keep the affected area clean and dry."
+        "The real AI crashed.",
+        "Error Details: " + (error.message || "Unknown error"),
+        "Look at the terminal at the bottom of VS Code for more info."
       ]
-    };
-
-    // Return the mock response with a 200 OK status so the UI continues working normally
-    return NextResponse.json(mockFallbackResponse, { status: 200 });
+    });
   }
 }

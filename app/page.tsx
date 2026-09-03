@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { History, PlusCircle, LogOut, Loader2, AlertTriangle, ShieldCheck } from "lucide-react";
 
 import SymptomRecorder from "./components/SymptomRecorder";
@@ -12,6 +12,7 @@ const DiseaseMap = dynamic(() => import("./components/DiseaseMap"), { ssr: false
 const supabaseUrl = "https://owbajiljwqzkvjijwlss.supabase.co";
 const supabaseAnonKey = "sb_publishable_HEYxt_vczz4i5sxQQpf2aQ_wLpT77vv";
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
+const MODEL_URL = "https://teachablemachine.withgoogle.com/models/xz8Dmt4IL/";
 export default function Dashboard() {
   const [alertMessage, setAlertMessage] = useState("");
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -32,6 +33,11 @@ export default function Dashboard() {
   const [image, setImage] = useState<string | null>(null);
   const [symptoms, setSymptoms] = useState("");
   const [result, setResult] = useState<any>(null);
+  const [diagnosis, setDiagnosis] = useState("");
+  const [confidence, setConfidence] = useState(0);
+  const [statusMessage, setStatusMessage] = useState("");
+  const [alertActive, setAlertActive] = useState(false);
+  const imageRef = useRef<HTMLImageElement | null>(null);
   const [loading, setLoading] = useState(false);
   
   const [healthRecords, setHealthRecords] = useState<any[]>([]);
@@ -221,6 +227,65 @@ export default function Dashboard() {
     );
   }
   // --------------------------------
+  const analyzeImage = async () => {
+    if (!imageRef.current) return;
+    setLoading(true);
+    setStatusMessage('');
+
+    try {
+      const tmImage = (window as any).tmImage;
+      const model = await tmImage.load(MODEL_URL + 'model.json', MODEL_URL + 'metadata.json');
+      const predictions = await model.predict(imageRef.current);
+
+      const topPrediction = predictions.reduce((prev: any, curr: any) =>
+        curr.probability > prev.probability ? curr : prev
+      );
+
+      const topConfidence = Math.round(topPrediction.probability * 100);
+      setConfidence(topConfidence);
+
+      if (topConfidence < 65) {
+        setDiagnosis('Uncertain / Unidentified Disease');
+        setAlertActive(true);
+        setStatusMessage(
+          "I cannot specify the disease from this scan. However, your image, symptoms, and Live GPS Coordinates have been dispatched to a nearby veterinarian."
+        );
+        sendAlertToVet({ condition: 'Unknown Condition', confidence: topConfidence });
+      } else if (topPrediction.className === 'Healthy Cow') {
+        setDiagnosis('Healthy Animal');
+        setAlertActive(false);
+        setStatusMessage('Your animal appears healthy. No emergency protocol needed.');
+     } else {
+        setDiagnosis(topPrediction.className);
+        setAlertActive(true);
+        setStatusMessage(`EMERGENCY PROTOCOL ACTIVATED: Detected ${topPrediction.className}. Alert dispatched to local Veterinarian & Farmer with Live GPS Coordinates.`);
+        window.alert(`EMERGENCY: ${topPrediction.className} detected! Alerting veterinarian.`);
+        sendAlertToVet({ condition: topPrediction.className, confidence: topConfidence });
+      }
+    } catch (err) {
+      console.error(err);
+      setStatusMessage('Error analyzing image. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const sendAlertToVet = async (details: { condition: string; confidence: number }) => {
+    try {
+      await fetch('/api/submit_report.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          condition: details.condition,
+          confidence: details.confidence,
+          image: image,
+          timestamp: new Date().toISOString(),
+        }),
+      });
+    } catch (error) {
+      console.error('Failed to notify backend:', error);
+    }
+  };
 
   return (
     <div className="flex h-screen bg-gradient-to-br from-slate-50 via-emerald-50/30 to-teal-100/50 text-black">
@@ -277,104 +342,80 @@ export default function Dashboard() {
               </div>
 
               {image && (
-                <div className="mt-6 rounded-xl overflow-hidden border border-slate-200 shadow-sm relative">
-                  <div className="absolute top-2 right-2 bg-black/50 text-white text-xs px-2 py-1 rounded-md backdrop-blur-sm">Image Preview</div>
-                  <img src={image} alt="Preview" className="h-56 w-full object-cover" />
-                </div>
-              )}
+  <>
+    <div className="mt-6 rounded-xl overflow-hidden border border-slate-200 shadow-sm relative">
+      <div className="absolute top-2 right-2 bg-black/50 text-white text-xs px-2 py-1 rounded-md backdrop-blur-sm">Image Preview</div>
+      <img ref={imageRef} src={image} alt="Preview" className="h-56 w-full object-cover" />
+    </div>
+    
+    <button 
+      onClick={analyzeImage} 
+      disabled={loading}
+      className="w-full mt-4 bg-teal-600 hover:bg-teal-700 text-white py-3 rounded-xl font-bold transition-colors"
+    >
+      {loading ? "Analyzing Image..." : "Run AI Diagnosis"}
+    </button>
+  </>
+)}
             </div>
-
-            {result && result.severity !== 'None' && result.disease !== 'Healthy' && (
-  <div className="bg-red-100 text-red-800 p-3 rounded-lg font-bold mb-4">
-    ⚠️ EMERGENCY PROTOCOL ACTIVATED: Alert dispatched to local Veterinarian & Farmer via WhatsApp with Live GPS Coordinates.
+            {/* AI Alert Banner */}
+{statusMessage && (
+  <div className={`p-4 mt-6 rounded-xl text-sm font-semibold border ${alertActive ? 'bg-red-50 text-red-800 border-red-200' : 'bg-emerald-50 text-emerald-800 border-emerald-200'}`}>
+    {statusMessage}
   </div>
 )}
-            {alertMessage && (
-          <div className="bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mt-6 mb-4 font-bold shadow-md rounded-md">
-            {alertMessage}
-          </div>
-        )}
 
-            {result && !result.error && (
-              <div className="p-5 border rounded-xl bg-white shadow-lg text-black space-y-3 border-t-4 border-t-green-500">
-                <h2 className="font-bold text-2xl text-green-700 border-b pb-2">
-                  Diagnosis: {result.disease || "Unknown"}
-                </h2>
-                <div className="flex justify-between">
-                  <p><strong>Confidence:</strong> {result.confidence || 0}%</p>
-                  <p><strong>Severity:</strong> <span className="bg-red-100 text-red-800 px-2 py-1 rounded text-sm">{result.severity || "Unknown"}</span></p>
-                </div>
-                
-                {result.immediate_actions && (
-                  <div className="mt-4 bg-gray-50 p-3 rounded-lg border">
-                    <h3 className="font-bold text-sm text-gray-700 uppercase tracking-wider mb-2">Immediate Action Required:</h3>
-                    <ul className="list-disc pl-5 space-y-1">
-                      {result.immediate_actions.map((action: string, i: number) => (
-                        <li key={i} className="text-gray-700 text-sm">{action}</li>
-                      ))}
-                    </ul>
+{/* AI Diagnosis Details */}
+              {diagnosis && (
+                <div className="p-5 mt-4 border rounded-xl bg-white shadow-lg text-black space-y-3 border-t-4 border-t-teal-500">
+                  <h2 className="font-bold text-2xl text-teal-700 border-b pb-2">
+                    Diagnosis: {diagnosis}
+                  </h2>
+                  <div className="flex justify-between">
+                    <p><strong>Confidence:</strong> {confidence}%</p>
                   </div>
-                )}
-              </div>
-            )}
-          </div>
-        )}
-        {activeTab === "database" && (
-          <div className="space-y-4">
-            
-            {/* THE NEW DISEASE RADAR MAP */}
-        <div className="border rounded-lg shadow-sm p-2 bg-white mb-6">
-          <DiseaseMap records={healthRecords} />
-        </div>
-            {healthRecords.length === 0 ? (
-              <p>No records found.</p>
-            ) : (
-              healthRecords.map((record: any) => (
-                <div key={record.id} className="p-4 border rounded shadow-sm bg-white">
-                  <h3 className="font-bold text-lg">{record.disease}</h3>
-                  <p>Severity: <span className={record.severity === 'Critical' ? 'text-red-500' : 'text-orange-500'}>{record.severity}</span></p>
-                  <p className="text-sm text-gray-500">Date: {new Date(record.created_at).toLocaleDateString()}</p>
                 </div>
-              ))
-            )}
-          </div>
-        )}
+    )}
+  </div>
+)}
 
+{/* Database Tab */}
+        {/* Database Tab */}
         {activeTab === "database" && (
-          <div className="max-w-5xl mx-auto">
-             <h1 className="text-3xl font-bold border-b pb-4 mb-6">Animal Health Records</h1>
-             <div className="bg-white rounded-2xl shadow-sm border overflow-hidden">
-               <table className="w-full text-left">
-                 <thead className="bg-gray-50 border-b">
-                   <tr>
-                     <th className="p-5 font-semibold text-gray-600">Date</th>
-                     <th className="p-5 font-semibold text-gray-600">Disease Detected</th>
-                     <th className="p-5 font-semibold text-gray-600">Severity</th>
-                   </tr>
-                 </thead>
-                 <tbody className="divide-y">
-                   {healthRecords.length === 0 ? (
-                     <tr>
-                       <td colSpan={3} className="p-5 text-center text-gray-500">No records found. Run a scan first.</td>
-                     </tr>
-                   ) : (
-                     healthRecords.map((record) => (
-                       <tr key={record.id} className="hover:bg-gray-50">
-                         <td className="p-5">{new Date(record.created_at).toLocaleDateString()}</td>
-                         <td className="p-5 font-bold text-gray-800">{record.disease}</td>
-                         <td className="p-5">
-                           <span className={`font-semibold px-3 py-1 rounded-full text-sm ${
-                             record.severity === 'Critical' ? 'bg-red-100 text-red-800' : 'bg-orange-100 text-orange-800'
-                           }`}>
-                             {record.severity}
-                           </span>
-                         </td>
-                       </tr>
-                     ))
-                   )}
-                 </tbody>
-               </table>
-             </div>
+          <div className="max-w-5xl mx-auto space-y-6">
+            <h1 className="text-3xl font-bold border-b pb-4">Animal Health Records</h1>
+            <div className="bg-white rounded-2xl shadow-sm border overflow-hidden">
+              <table className="w-full text-left">
+                <thead className="bg-gray-50 border-b">
+                  <tr>
+                    <th className="p-5 font-semibold text-gray-600">Date</th>
+                    <th className="p-5 font-semibold text-gray-600">Disease Detected</th>
+                    <th className="p-5 font-semibold text-gray-600">Severity</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y">
+                  {healthRecords.length === 0 ? (
+                    <tr>
+                      <td colSpan={3} className="p-5 text-center text-gray-500">No records found. Run a scan first.</td>
+                    </tr>
+                  ) : (
+                    healthRecords.map((record: any) => (
+                      <tr key={record.id} className="hover:bg-gray-50">
+                        <td className="p-5">{new Date(record.created_at).toLocaleDateString()}</td>
+                        <td className="p-5 font-bold text-gray-800">{record.disease}</td>
+                        <td className="p-5">
+                          <span className={`font-semibold px-3 py-1 rounded-full text-sm ${
+                            record.severity === 'Critical' ? 'bg-red-100 text-red-800' : 'bg-orange-100 text-orange-800'
+                          }`}>
+                            {record.severity}
+                          </span>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
       </div>
