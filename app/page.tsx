@@ -1,7 +1,6 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
-import { History, PlusCircle, LogOut, Loader2, AlertTriangle, ShieldCheck } from "lucide-react";
-
+import { PlusCircle, History, LogOut, MapPin, Loader2, AlertTriangle, ShieldCheck } from "lucide-react";
 import SymptomRecorder from "./components/SymptomRecorder";
 import { createClient } from "@supabase/supabase-js";
 import dynamic from "next/dynamic";
@@ -395,6 +394,53 @@ export default function Dashboard() {
         {activeTab === "database" && (
           <div className="max-w-5xl mx-auto space-y-6">
             <h1 className="text-3xl font-bold border-b pb-4">Animal Health Records</h1>
+            {/* LIVE DISEASE SPREAD RADAR (FAKE UI) */}
+            <div className="bg-white rounded-2xl shadow-sm border p-6 mb-6">
+              <h3 className="text-xl font-bold text-slate-800 mb-4 flex items-center">
+                <MapPin className="mr-2 h-5 w-5 text-red-500" />
+                Live Outbreak Radar
+              </h3>
+              
+              <div className="relative w-full h-72 bg-slate-100 rounded-xl overflow-hidden border border-slate-200">
+                {/* Embedded Map Background */}
+                <iframe
+                  width="100%"
+                  height="100%"
+                  frameBorder="0"
+                  scrolling="no"
+                  marginHeight={0}
+                  marginWidth={0}
+                  src="https://maps.google.com/maps?q=Rajasthan&t=&z=6&ie=UTF8&iwloc=&output=embed"
+                  className="absolute inset-0 grayscale opacity-70"
+                ></iframe>
+
+                {/* Simulated GPS Outbreak Dots (Pulsing Animations) */}
+                <div className="absolute top-[40%] left-[45%] flex items-center justify-center" title="Critical Outbreak">
+                  <span className="absolute inline-flex h-5 w-5 animate-ping rounded-full bg-red-400 opacity-75"></span>
+                  <span className="relative inline-flex h-3 w-3 rounded-full bg-red-600 border-2 border-white shadow-md"></span>
+                </div>
+                
+                <div className="absolute top-[30%] left-[60%] flex items-center justify-center" title="Critical Outbreak">
+                  <span className="absolute inline-flex h-5 w-5 animate-ping rounded-full bg-red-400 opacity-75"></span>
+                  <span className="relative inline-flex h-3 w-3 rounded-full bg-red-600 border-2 border-white shadow-md"></span>
+                </div>
+
+                <div className="absolute top-[60%] left-[35%] flex items-center justify-center" title="Moderate Risk">
+                  <span className="absolute inline-flex h-5 w-5 animate-ping rounded-full bg-orange-400 opacity-75"></span>
+                  <span className="relative inline-flex h-3 w-3 rounded-full bg-orange-500 border-2 border-white shadow-md"></span>
+                </div>
+              </div>
+
+              {/* Map Legend */}
+              <div className="flex gap-6 mt-4 text-sm font-semibold text-slate-600 justify-center">
+                <span className="flex items-center">
+                  <span className="h-3 w-3 rounded-full bg-red-600 mr-2 shadow-sm"></span> Critical Alert Zone
+                </span>
+                <span className="flex items-center">
+                  <span className="h-3 w-3 rounded-full bg-orange-500 mr-2 shadow-sm"></span> Moderate Risk Zone
+                </span>
+              </div>
+            </div>
             <div className="bg-white rounded-2xl shadow-sm border overflow-hidden">
               <table className="w-full text-left">
                 <thead className="bg-gray-50 border-b">
