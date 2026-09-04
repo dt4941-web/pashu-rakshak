@@ -210,7 +210,7 @@ export default function Dashboard() {
             
             <form onSubmit={handleLogin} className="space-y-6 relative z-10">
               <div>
-                <label className="block text-sm font-medium text-emerald-100 mb-1.5">Veterinarian Email</label>
+                <label className="block text-sm font-medium text-emerald-100 mb-1.5">farmer Email</label>
                 <input
                   type="email"
                   value={email}
